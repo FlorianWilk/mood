@@ -76,7 +76,7 @@ MODELS = {
         "experimental": True,
     },
 }
-DEFAULT_MODEL = _env("MODEL", "sdxl")
+DEFAULT_MODEL = _env("MODEL", "sd15")
 
 # LoRAs: Kurzname -> {file, url, scale}. Fehlt die Datei im LORA_DIR, wird sie von
 # url geladen. --lora akzeptiert Kurznamen ODER direkten Pfad zu einer .safetensors.
@@ -89,7 +89,9 @@ LORAS = {
         "url": "https://civitai.com/api/download/models/43110",
     },
 }
-DEFAULT_LORA_SCALE = 0.85
+DEFAULT_LORA = _env("LORA", "vaultboy")
+DEFAULT_LORA_SCALE = float(_env("LORA_SCALE", "0.85"))
+DEFAULT_SEED = int(_env("SEED", "1"))  # fixer Seed -> reproduzierbare, konsistente Mimik
 
 # Helligkeitsrampen dunkel (leer) -> hell (dicht). Für dunklen Terminal-Hintergrund.
 RAMPS = {
@@ -103,7 +105,7 @@ RAMPS = {
                  "qpdbkhao*#MW&8%B@$"),
     "classic":  " .:-=+*#%@",                  # Standard-Fallback
 }
-DEFAULT_RAMP = _env("RAMP", "acid")
+DEFAULT_RAMP = _env("RAMP", "ink")
 
 # Wenige, klare ANSI-Akzentfarben (Helligkeit bleibt über die Zeichen).
 COLORS = {
@@ -114,14 +116,15 @@ COLORS = {
     "white": "\x1b[38;5;15m",
 }
 RESET = "\x1b[0m"
+DEFAULT_COLOR = _env("COLOR", "green")
 
 # Terminal-Zellen sind ~2:1 (höher als breit) -> Höhe stauchen.
 CELL_ASPECT = 0.5
 
-# Default-Prompt (ohne Argument). Enthält '::' -> startet direkt den Loop-Modus.
+# Default-Prompt (ohne Argument). '::' = Platzhalter für die Emotion -> Loop-Modus.
 DEFAULT_PROMPT = _env(
     "PROMPT",
-    "girl's face, :: , retro poster style, high contrast, monochrome, black background")
+    "girl, :: face, retro poster style, high contrast, monochrome, black background")
 
 # Loop-Modus: enthält der Prompt diesen Platzhalter, wird statt One-Shot ein
 # TCP-Server gestartet, der eingehende Textzeilen einsetzt und neu generiert.
@@ -329,7 +332,7 @@ def run_pipeline(pipe, prompt: str, args, cfg: dict):
     """Ein Bild mit bereits geladener Pipeline erzeugen."""
     import torch
     gen = None
-    if args.seed is not None:
+    if args.seed is not None and args.seed >= 0:
         gen = torch.Generator(device="cuda").manual_seed(args.seed)
 
     w, h = args.size or cfg["size"]
@@ -500,23 +503,25 @@ def main() -> None:
         description="Prompt -> Bild (GPU) -> ASCII im Terminal.",
     )
     ap.add_argument("prompt", nargs="?", default=DEFAULT_PROMPT,
-                    help="Bildbeschreibung ('::' = Loop-Modus). Default: girl's face …")
+                    help="Bildbeschreibung ('::' = Emotion-Platzhalter -> Loop). Default: Mood-Template")
     ap.add_argument("-v", "--verbose", action="store_true",
                     help="Lade-Logs, Progress-Balken und Framework-Warnungen anzeigen")
     ap.add_argument("--model", choices=list(MODELS), default=DEFAULT_MODEL)
     ap.add_argument("--steps", type=int, help="Inference-Steps (Default je Modell)")
     ap.add_argument("--size", type=parse_size, help="WxH, z.B. 768x768")
-    ap.add_argument("--seed", type=int, help="Seed für Reproduzierbarkeit")
+    ap.add_argument("--seed", type=int, default=DEFAULT_SEED,
+                    help="Seed (Default %(default)s; -1 = zufällig)")
     ap.add_argument("--neg", default="", help="Negativ-Prompt (SDXL/SD1.5)")
-    ap.add_argument("--lora", help=f"LoRA: Kurzname {list(LORAS)} oder Pfad zur .safetensors")
+    ap.add_argument("--lora", default=DEFAULT_LORA,
+                    help=f"LoRA: Kurzname {list(LORAS)} oder Pfad zur .safetensors ('' = keine)")
     ap.add_argument("--lora-scale", type=float, default=DEFAULT_LORA_SCALE,
                     help="LoRA-Stärke (Default %(default)s)")
     ap.add_argument("--ramp", choices=list(RAMPS), default=DEFAULT_RAMP)
-    ap.add_argument("--color", choices=list(COLORS), default="mono")
+    ap.add_argument("--color", choices=list(COLORS), default=DEFAULT_COLOR)
     ap.add_argument("--invert", action="store_true",
                     help="Helligkeit umkehren (z.B. schwarz-auf-weiß -> weiß-auf-schwarz)")
-    ap.add_argument("--contrast", action="store_true",
-                    help="Auto-Kontrast für klarere Kanten (gut für Icons/Line-Art)")
+    ap.add_argument("--contrast", action=argparse.BooleanOptionalAction, default=True,
+                    help="Auto-Kontrast für klarere Kanten (Default an; --no-contrast aus)")
     ap.add_argument("--width", type=int, default=0,
                     help="ASCII-Ausgabebreite in Spalten (Default: Terminalbreite = Fullscreen)")
     ap.add_argument("--height", type=int, default=0,
