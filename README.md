@@ -57,7 +57,7 @@ Emotion. Standard ist ein Vault-Boy-Stil (Fallout). Alles per Env überschreibba
 | `MOOD_MODEL` | `sd15` | `sdxl`, `sd15`, `flux`*, `qwen`* |
 | `MOOD_LORA` | `vaultboy` | LoRA-Kurzname / Pfad (`''` = keine) |
 | `MOOD_RAMP` | `ink` | ASCII-Rampe: `ink`, `acid`, `blocks`, `minimal`, … |
-| `MOOD_COLOR` | `green` | `mono`, `green`, `amber`, `cyan`, `white` |
+| `MOOD_COLOR` | `green` | `mono`, Akzent (`green`/`amber`/`cyan`/`white`) oder `palette` (echte Bildfarben, auf 8 klare ANSI-Farben reduziert) |
 | `MOOD_MODELS_ROOT` | – | lokale Modelle bevorzugen statt HF-Download |
 
 Volle Optionsliste: `./run.sh --help`. CLI-Flags überschreiben Env überschreiben `.env`.

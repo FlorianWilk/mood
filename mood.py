@@ -107,15 +107,29 @@ RAMPS = {
 }
 DEFAULT_RAMP = _env("RAMP", "ink")
 
-# Wenige, klare ANSI-Akzentfarben (Helligkeit bleibt über die Zeichen).
+# Farb-Modi: "mono" (keine Farbe), ein einzelner Akzent (amber/cyan/…), oder
+# "palette" = echte Bildfarben, quantisiert auf ein kleines, klares Set.
 COLORS = {
-    "mono":  "",
-    "amber": "\x1b[38;5;214m",
-    "cyan":  "\x1b[38;5;51m",
-    "green": "\x1b[38;5;47m",
-    "white": "\x1b[38;5;15m",
+    "mono":    "",
+    "amber":   "\x1b[38;5;214m",
+    "cyan":    "\x1b[38;5;51m",
+    "green":   "\x1b[38;5;47m",
+    "white":   "\x1b[38;5;15m",
+    "palette": "",  # Sonderfall: Farbe pro Zeichen aus dem Bild (siehe to_ascii)
 }
 RESET = "\x1b[0m"
+
+# Minimiertes Farbset für --color palette: 8 klare ANSI-Farben (RGB -> ANSI-Code).
+PALETTE = [
+    ((0, 0, 0),       "\x1b[38;5;0m"),
+    ((205, 0, 0),     "\x1b[38;5;1m"),
+    ((0, 205, 0),     "\x1b[38;5;2m"),
+    ((205, 205, 0),   "\x1b[38;5;3m"),
+    ((0, 60, 230),    "\x1b[38;5;4m"),
+    ((205, 0, 205),   "\x1b[38;5;5m"),
+    ((0, 205, 205),   "\x1b[38;5;6m"),
+    ((230, 230, 230), "\x1b[38;5;15m"),
+]
 DEFAULT_COLOR = _env("COLOR", "green")
 
 # Terminal-Zellen sind ~2:1 (höher als breit) -> Höhe stauchen.
@@ -171,6 +185,12 @@ def ramp_char(brightness: float, chars: str) -> str:
     return chars[round(b * (len(chars) - 1))]
 
 
+def nearest_ansi(r: int, g: int, b: int) -> str:
+    """RGB auf die nächste Farbe im minimierten PALETTE-Set abbilden -> ANSI-Code."""
+    best = min(PALETTE, key=lambda p: (p[0][0]-r)**2 + (p[0][1]-g)**2 + (p[0][2]-b)**2)
+    return best[1]
+
+
 def to_ascii(img, max_cols: int, max_rows: int, ramp: str, color: str,
              invert: bool = False, contrast: bool = False) -> str:
     """PIL-Bild -> ASCII-Block, seitenverhältnis-korrekt in max_cols x max_rows gefittet."""
@@ -187,17 +207,39 @@ def to_ascii(img, max_cols: int, max_rows: int, ramp: str, color: str,
     cols = max(1, min(cols, max_cols))
     rows = max(1, rows)
 
-    small = img.convert("L").resize((cols, rows))
+    # Helligkeit -> Zeichen (immer).
+    gray = img.convert("L").resize((cols, rows))
     if contrast:
-        small = ImageOps.autocontrast(small, cutoff=2)
+        gray = ImageOps.autocontrast(gray, cutoff=2)
     if invert:
-        small = ImageOps.invert(small)
-    px = small.load()
+        gray = ImageOps.invert(gray)
+    gp = gray.load()
 
+    if color == "palette":
+        # Zusätzlich Farbe pro Zeichen aus dem Bild (auf PALETTE quantisiert).
+        rgb = img.convert("RGB").resize((cols, rows))
+        if contrast:
+            rgb = ImageOps.autocontrast(rgb, cutoff=2)
+        rp = rgb.load()
+        out_lines = []
+        for y in range(rows):
+            parts, last = [], None
+            for x in range(cols):
+                ch = ramp_char(gp[x, y] / 255.0, chars)
+                code = nearest_ansi(*rp[x, y])
+                if code != last:          # Farbcode nur bei Wechsel ausgeben
+                    parts.append(code)
+                    last = code
+                parts.append(ch)
+            parts.append(RESET)
+            out_lines.append("".join(parts))
+        return "\n".join(out_lines)
+
+    # mono / einzelner Akzent
     prefix = COLORS.get(color, "")
     out_lines = []
     for y in range(rows):
-        line = "".join(ramp_char(px[x, y] / 255.0, chars) for x in range(cols))
+        line = "".join(ramp_char(gp[x, y] / 255.0, chars) for x in range(cols))
         out_lines.append(f"{prefix}{line}{RESET}" if prefix else line)
     return "\n".join(out_lines)
 
