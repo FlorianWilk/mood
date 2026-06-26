@@ -2,6 +2,8 @@
 __pycache__/
 *.pyc
 *.png
+!docs/demo.png
+!docs/demo2.png
 *.safetensors
 *.part
 .env

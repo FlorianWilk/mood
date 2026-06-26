@@ -4,20 +4,12 @@
 Terminal: dein LLM zeigt seine aktuelle Stimmung als lebendiges, lokal mit Stable
 Diffusion generiertes ASCII-Gesicht — proaktiv, während ihr zusammenarbeitet.
 
+![mood — relieved and laughing](docs/demo.png)
+
 Unter der Haube: Eine Emotion (z.B. `smiling`) wird in einen Prompt eingesetzt, auf
 der GPU ein Bild generiert und als ASCII-Helligkeitsgradient im Terminal angezeigt.
 Per MCP ruft die KI das Tool **`feel(emotion)`** selbst auf, wann immer sich ihre
 Stimmung ändert — wie ein Mensch unwillkürlich das Gesicht verzieht.
-
-```
-o##@%#*++**#@%#o      o##@%#*++**#@%#o
-o#@:    +@@%:.#o      o#@*  '*@@%: #o
-o#@ +@@. #@ @@+ o     o#@ @@+ #@ @@. o
-o#%  '*  #@ '*  o     o#%      #@     o
-o#@*....+%@%+...*o     o@%*++**%@%**+o
-  '*%###*' '*###%*'      '*%######%*'
-        smiling                 surprised
-```
 
 ## Schnellstart
 
@@ -48,6 +40,10 @@ im Chat nur `"ok"` zurück (das Bild geht aufs Display, nicht in die Konversatio
 echo "laughing" | nc 127.0.0.1 8765      # Emotion ans laufende Display schicken
 ./run.sh "a red sports car"              # einmaliges Bild (kein '::' -> One-Shot)
 ```
+
+<img src="docs/demo2.png" width="380" alt="mood — very happy">
+
+*`very happy`*
 
 ## Aussehen anpassen
 
