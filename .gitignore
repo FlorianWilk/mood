@@ -5,6 +5,7 @@ __pycache__/
 !docs/hero.png
 !docs/demo.png
 !docs/demo2.png
+!docs/palette.png
 *.safetensors
 *.part
 .env

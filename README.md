@@ -62,6 +62,13 @@ Emotion. Standard ist ein Vault-Boy-Stil (Fallout). Alles per Env überschreibba
 
 Volle Optionsliste: `./run.sh --help`. CLI-Flags überschreiben Env überschreiben `.env`.
 
+Mit `--color palette` werden statt eines Akzents echte Bildfarben gerendert (auf ein
+kleines, klares Set reduziert):
+
+<img src="docs/palette.png" width="420" alt="--color palette — happy, solved the issue">
+
+*`--color palette` · „happy, solved the issue"*
+
 ## Per Docker
 
 Braucht NVIDIA-Treiber + nvidia-container-toolkit. Modelle landen auf dem Host in
