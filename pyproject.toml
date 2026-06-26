@@ -1,0 +1,39 @@
+[project]
+name = "mood"
+version = "0.1.0"
+description = "Prompt -> Bild (Stable Diffusion, GPU) -> ASCII im Terminal"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = [
+    "torch",
+    "diffusers>=0.31",
+    "transformers>=4.44,<5",
+    "accelerate>=0.34",
+    "safetensors>=0.4",
+    "peft>=0.13",
+    "mcp>=1.2",
+    "pillow>=10.0",
+    "sentencepiece>=0.2",
+    "protobuf>=4.0",
+]
+
+[project.scripts]
+mood = "mood:main"
+
+[tool.uv]
+# PyTorch mit CUDA (Ampere / RTX 3090) statt CPU-Build vom PyPI-Default.
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu121" }
+
+[tool.hatch.build.targets.wheel]
+py-modules = ["mood"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

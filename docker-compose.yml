@@ -1,0 +1,23 @@
+services:
+  mood:
+    build: .
+    image: mood
+    # Modelle landen auf dem Host (per MODELS_DIR überschreibbar, Default ./models).
+    # Beim ersten Lauf werden sie nach ./models/hf heruntergeladen und bleiben erhalten.
+    volumes:
+      - ${MODELS_DIR:-./models}:/models
+    environment:
+      - HF_HOME=/models/hf
+      - MOOD_LORA_DIR=/models/loras
+    ports:
+      - "8765:8765"        # Loop/Listener (nc / MCP-Bridge)
+    stdin_open: true        # -it: ASCII-Ausgabe im Terminal sichtbar
+    tty: true
+    # GPU durchreichen (nvidia-container-toolkit nötig).
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
