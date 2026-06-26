@@ -22,14 +22,14 @@ dependencies = [
 mood = "mood:main"
 
 [tool.uv]
-# PyTorch mit CUDA (Ampere / RTX 3090) statt CPU-Build vom PyPI-Default.
+# PyTorch mit CUDA nur auf Linux/NVIDIA. Auf macOS kommt torch von PyPI (Apple-MPS).
 [[tool.uv.index]]
 name = "pytorch-cu121"
 url = "https://download.pytorch.org/whl/cu121"
 explicit = true
 
 [tool.uv.sources]
-torch = { index = "pytorch-cu121" }
+torch = [{ index = "pytorch-cu121", marker = "sys_platform == 'linux'" }]
 
 [tool.hatch.build.targets.wheel]
 py-modules = ["mood"]

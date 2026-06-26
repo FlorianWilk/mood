@@ -13,8 +13,9 @@ Stimmung ändert — wie ein Mensch unwillkürlich das Gesicht verzieht.
 
 ## Schnellstart
 
-Voraussetzung: [`uv`](https://docs.astral.sh/uv/) + NVIDIA-GPU (läuft via CPU-Offload
-auch mit wenig VRAM).
+Voraussetzung: [`uv`](https://docs.astral.sh/uv/) und eine GPU — **NVIDIA** (Linux,
+CUDA) oder **Apple Silicon** (macOS, MPS). Ohne GPU läuft es auf der CPU, aber sehr
+langsam. macOS-Details siehe unten.
 
 ```sh
 ./run.sh
@@ -24,11 +25,11 @@ Startet das Stimmungs-Display (Listener auf Port 8765) mit den Standard-Settings
 Beim ersten Mal wird die Umgebung eingerichtet und das Modell von HuggingFace geladen
 (mit sichtbarem Fortschritt). Dann ist das Display bereit.
 
-Damit deine KI es ansteuert, die MCP-Bridge in Claude Code registrieren:
+Damit deine KI es ansteuert, die MCP-Bridge in Claude Code registrieren (siehe
+[MCP in Claude Code](#mcp-in-claude-code)):
 
 ```sh
-claude mcp add mood --scope user -- \
-  "$(pwd)/.venv/bin/python" "$(pwd)/mood.py" -m --port 8765
+./install-mcp.sh
 ```
 
 Ab jetzt zeigt die KI ihre Stimmung von selbst auf dem Display. `feel(emotion)` gibt
@@ -68,6 +69,37 @@ kleines, klares Set reduziert):
 <img src="docs/palette.png" width="420" alt="--color palette — happy, solved the issue">
 
 *`--color palette` · „happy, solved the issue"*
+
+## macOS / Apple Silicon
+
+Läuft nativ auf M1/M2/M3 über Apples MPS-Backend — **gleiche Codebasis wie Linux**,
+kein CUDA und kein Docker nötig:
+
+```sh
+# uv installieren (falls noch nicht vorhanden):
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+./run.sh
+```
+
+`uv sync` zieht automatisch das passende torch (mit MPS) von PyPI — der CUDA-Index
+greift nur unter Linux. Die App erkennt das Gerät selbst (CUDA → MPS → CPU). Modelle
+landen im HuggingFace-Cache (`~/.cache/huggingface`).
+
+- Die erste Generierung lädt das Modell (mehrere GB); danach wenige Sekunden pro Bild
+  (je nach Chip). MPS ist langsamer als eine dedizierte NVIDIA-GPU, aber gut nutzbar.
+- `nc` ist vorinstalliert; MCP-Bridge (`./install-mcp.sh`) funktioniert identisch.
+- Das **Docker**-Setup unten ist Linux/NVIDIA-only (GPU-Passthrough). Auf dem Mac
+  einfach nativ via `./run.sh`.
+
+## MCP in Claude Code
+
+```sh
+./install-mcp.sh
+```
+
+Registriert die Bridge (Tool `feel`) mit den richtigen Pfaden — funktioniert auf
+Linux und macOS. Danach Claude Code neu starten und `./run.sh` laufen lassen.
 
 ## Per Docker
 

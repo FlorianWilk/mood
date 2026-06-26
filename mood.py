@@ -244,10 +244,37 @@ def to_ascii(img, max_cols: int, max_rows: int, ramp: str, color: str,
     return "\n".join(out_lines)
 
 
-def free_vram_gb() -> float:
+_DEVICE = None
+
+
+def device() -> str:
+    """Bestes verfügbares Gerät: CUDA (NVIDIA) > MPS (Apple Silicon) > CPU."""
+    global _DEVICE
+    if _DEVICE is None:
+        import torch
+        if torch.cuda.is_available():
+            _DEVICE = "cuda"
+        elif getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
+            _DEVICE = "mps"
+        else:
+            _DEVICE = "cpu"
+    return _DEVICE
+
+
+def empty_cache() -> None:
     import torch
-    if not torch.cuda.is_available():
-        return 0.0
+    if device() == "cuda":
+        torch.cuda.empty_cache()
+    elif device() == "mps":
+        torch.mps.empty_cache()
+
+
+def free_vram_gb() -> float:
+    """Freies VRAM in GB – nur auf CUDA relevant (für CPU-Offload-Entscheidung).
+    Auf MPS/CPU 'unendlich', da dort kein CUDA-Offload greift."""
+    import torch
+    if device() != "cuda":
+        return float("inf")
     free, _total = torch.cuda.mem_get_info()
     return free / 1024**3
 
@@ -325,31 +352,36 @@ def load_pipeline(cfg: dict):
         err("   Erster Lauf – es werden mehrere GB heruntergeladen, das kann dauern.")
         err("   Fortschritt erscheint gleich darunter (es hängt nicht).")
 
+    # dtype je Gerät: CPU braucht float32 (fp16 dort langsam/teils unsupported).
+    fp16 = torch.float32 if device() == "cpu" else torch.float16
+    bf16 = torch.float32 if device() == "cpu" else torch.bfloat16
+
     def load(Pipe, **kw):
         return (Pipe.from_single_file(loc, torch_dtype=kw.pop("dtype"), use_safetensors=True, **kw)
                 if single else
                 Pipe.from_pretrained(loc, torch_dtype=kw.pop("dtype"), **kw))
 
     if loader == "sdxl":
-        return load(StableDiffusionXLPipeline, dtype=torch.float16)
+        return load(StableDiffusionXLPipeline, dtype=fp16)
     if loader == "sd15":
         # safety_checker=None: verhindert False-Positive-Schwarzbilder bei abstrakten Motiven.
-        return load(StableDiffusionPipeline, dtype=torch.float16, safety_checker=None)
+        return load(StableDiffusionPipeline, dtype=fp16, safety_checker=None)
     if loader == "flux":
         from diffusers import FluxPipeline
-        return load(FluxPipeline, dtype=torch.bfloat16)
+        return load(FluxPipeline, dtype=bf16)
     if loader == "qwen":
         from diffusers import QwenImagePipeline  # diffusers>=0.32
-        return load(QwenImagePipeline, dtype=torch.bfloat16)
+        return load(QwenImagePipeline, dtype=bf16)
 
     raise ValueError(f"Unbekannter Loader: {loader}")
 
 
 def build_pipeline(args, cfg: dict):
-    """Pipeline einmal laden (Modell + LoRA + Offload). Im Loop wiederverwendbar."""
+    """Pipeline einmal laden (Modell + LoRA + Gerät). Im Loop wiederverwendbar."""
+    dev = device()
     free = free_vram_gb()
-    log(f"VRAM frei: {free:.1f} GB")
-    if free < 9.0:
+    log(f"Gerät: {dev}" + (f" · VRAM frei: {free:.1f} GB" if dev == "cuda" else ""))
+    if dev == "cuda" and free < 9.0:
         log("WARNUNG: Wenig freies VRAM (<9 GB). Läuft evtl. ComfyUI? "
             "Aktiviere CPU-Offload als Fallback (langsamer).")
 
@@ -362,10 +394,11 @@ def build_pipeline(args, cfg: dict):
         pipe.load_lora_weights(lora_path)
         pipe.fuse_lora(lora_scale=args.lora_scale)  # einbacken: robust mit CPU-Offload
 
-    if free < 11.0:
+    # CPU-Offload nur bei knappem CUDA-VRAM; sonst direkt aufs Gerät (cuda/mps/cpu).
+    if dev == "cuda" and free < 11.0:
         pipe.enable_model_cpu_offload()
     else:
-        pipe = pipe.to("cuda")
+        pipe = pipe.to(dev)
     pipe.set_progress_bar_config(disable=not VERBOSE)
     return pipe
 
@@ -375,7 +408,9 @@ def run_pipeline(pipe, prompt: str, args, cfg: dict):
     import torch
     gen = None
     if args.seed is not None and args.seed >= 0:
-        gen = torch.Generator(device="cuda").manual_seed(args.seed)
+        # MPS hat keinen eigenen Generator -> CPU-Generator (reproduzierbar genug).
+        gd = "cuda" if device() == "cuda" else "cpu"
+        gen = torch.Generator(device=gd).manual_seed(args.seed)
 
     w, h = args.size or cfg["size"]
     steps = args.steps or cfg["steps"]
@@ -394,12 +429,11 @@ def run_pipeline(pipe, prompt: str, args, cfg: dict):
 
 
 def generate(prompt: str, args, cfg: dict):
-    """One-Shot: laden, generieren, VRAM freigeben."""
-    import torch
+    """One-Shot: laden, generieren, Speicher freigeben."""
     pipe = build_pipeline(args, cfg)
     image = run_pipeline(pipe, prompt, args, cfg)
     del pipe
-    torch.cuda.empty_cache()
+    empty_cache()
     return image
 
 
@@ -414,7 +448,7 @@ def _send(conn, text: str) -> None:
 def serve_loop(template: str, args, cfg: dict, max_cols: int, max_rows: int):
     """Loop-Modus: Pipeline einmal laden, dann pro TCP-Textzeile neu generieren.
     Eingehende Zeile ersetzt LOOP_PLACEHOLDER im Template. CTRL-C beendet."""
-    import socket, signal, torch
+    import socket, signal
 
     pipe = build_pipeline(args, cfg)
 
@@ -466,7 +500,7 @@ def serve_loop(template: str, args, cfg: dict, max_cols: int, max_rows: int):
     finally:
         srv.close()
         del pipe
-        torch.cuda.empty_cache()
+        empty_cache()
 
 
 def bridge_send(emotion: str, port: int, timeout: float = 180.0) -> str:
