@@ -89,8 +89,9 @@ landen im HuggingFace-Cache (`~/.cache/huggingface`).
 - Die erste Generierung lädt das Modell (mehrere GB); danach wenige Sekunden pro Bild
   (je nach Chip). MPS ist langsamer als eine dedizierte NVIDIA-GPU, aber gut nutzbar.
 - `nc` ist vorinstalliert; MCP-Bridge (`./install-mcp.sh`) funktioniert identisch.
-- Das **Docker**-Setup unten ist Linux/NVIDIA-only (GPU-Passthrough). Auf dem Mac
-  einfach nativ via `./run.sh`.
+- **Docker bringt auf dem Mac nichts:** Container haben dort keinen Zugriff auf die
+  Apple-GPU (Metal/MPS) — nur CPU, also viel zu langsam. Auf dem Mac immer `./run.sh`
+  nativ nutzen. Das Docker-Setup unten ist ausschließlich für Linux + NVIDIA.
 
 ## MCP in Claude Code
 
