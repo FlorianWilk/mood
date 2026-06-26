@@ -4,56 +4,12 @@
 Terminal: dein LLM zeigt seine aktuelle Stimmung als lebendiges, lokal mit Stable
 Diffusion generiertes ASCII-Gesicht — proaktiv, während ihr zusammenarbeitet.
 
-```
-x8:!!!!!!!!!+!::::::::::::!!::::!::::::::::::::::::::::!!!!!!!!!!!!!!!!!!!::::8x
-xx :+oo+++oo+"    '":".   .!'   .'.    "::".           ':"'+''" .!"!":!!!:.   xx
-ox "+++o8o!+!'  "%xo+o%o.  8#o' '%"  "%o!!o#o.......... :@'@x'@'!@'@"%@!:". . xx
-ox     !@x:!!:"'#x.   "@+  8+!8x+@+  %8   ."!..       .. #x:@@@#@x @"o8+!  .. xx
-ox  ...!@o'"++:.+#!"'"o#"  8+ .+8@+  "o.  ''             "8'8@.8@..@"+%:""... xx
-ox  ..."x"       "+ooo+.  .o:   .+!       "'             .!'.".'" 'x":+oo!' . xx
-ox .. ."":"''''''..'' .'.'"""'''''.       :!. .           o#: ":'':""::::!' . xx
-xx ..'""""""+!':x":""..+!"!!+++o!'         ''!x"  .       .x@o"'"":oo!"""!+'  xx
-xx . '++'."o+' .o'8o. .%x .'"!o!.      .'':+8@@8+'..    '":x@@%"  "8@! "%8!.  %x
-ox ..  :%o+"   'o.8@#:.%x . 'o!       .'+8#@@##@@8o!:"'."+8@#!+"'."@@!x#!.  . xx
-ox ..  :o%"    'o.8+!#88x ....       ."!%###@@@@@@@#%oo+!"."'   .."@@!x#"  .. xx
-ox . .:o+"!!:. .o.8+ 'x@x ..    .   .:xxx%%xox8@@@@@@#8ooo"       "8@: :8x. . xx
-ox ..!o".  '!+''x.%!  .!!..    '+!  "xxxxxxxo!":!x@@@@88o!"     .."%8:  'x%'  %x
-xx .!!:::::::!!!+::' .:!!:.    !%!""o%88o' 'x":+!x@@#x":oo'    .".:!!:::!!!!. %x
-xx     .  '!ox%%%xo!"..88"     :o!!+x8###%x%@8o8x8@#x"'+!+o'  .'.       !88x  %x
-ox .... 'o8####@@@###8%@+.      !%o+ox8###########@##xx@o:%:       . .  o#@8  %x
-ox ... !##88%xooox8#@@%!         ":+oox88###########@@###@8:+     ..... o##8  %x
-ox .. +@888%.    '##+".            "o+ox%8#####%%#####@@##%+#o   .%%%%%%8%@8  %x
-o% . .@x#%@@8:  !8o'               .!++o%8###@8+!x%#####+x#8x@:  '#@#####8@8  %x
-x% . '@+x%%o+xxxo'                  :++ox%8##@#8%8######:'%@8#:   o%%%%%88@8  %x
-ox .  %##%o'  "!                   :+:+oox%8x+!!+x#@@@8!"x@@%:  .       +##8  %x
-ox .. .%###8o+'           ..'""'.':oo+!!+ooxo+oxoo8@8x+x#@@8'   '!.  .. +##8  %x
-ox ...  :%8#@@:.'.    ...o8##@@%+++++oo+!:!x8%xx8#xoo8#@@@x'   .88.  .. o@@#  %x
-ox ..... .'!+:':x#8!....'8@@@@@@%+++++ooo+!!+x%%o!%#@@@@#!   ...".   .. :xx+  xx
-ox ......     ...:8@%"...x@@@@@@@%++++++ooo++!'"!o8#@@#o.            ...    . xx
-ox ....     ...''''+@#:.'"#@@@@@@@8o+++++++o+".':+o#@@@x.           ......... xx
-ox ...     ....'''':o@@:..!@@@@@@@@#8xoxxx%o!!x!"!o%@@@@x'"".      .......... xx
-xx ..      ...'''"o8#8@#''.+@@@@@@@@@@@@@@###88x!:+o#@@@@%x+....              xx
-xx .       ...'''!%8##8@+''.!#@@@@@@@@@@@@@@@#88o!:+x@@@@@8"'"'.. .''''''''''.xx
-xx         ...''.o@@@#8@x."'.:%@@@@@@@@@@@@@@@88x+'!+8@@@@@%''"'..'8#8@#8####xxx
-xx         ....''+8#@@##o '"'''+8@@@@@@@@@@@@@#8o' "+x@@@@@@%"''.. !@#####@#@xxx
-ox          ...''+@#@@@8' ...'''':+%8#@@@@@@#8o'   .++8@@@@@@%""'...%8@#8###@%xx
-xx        .:+x%8######@#.....'''....'"::!!!:"'.   .::+o#@@@@@@8:'.. %8#%8!!!o+xx
-x%     ."x8#@@@@@@#@@@@@! ...'''!:"!!!+"'""''::.  .:"++%@@@@@@@8+ox+x8@%x     xx
-o%    "+x@############@@8.....''o!:#8:%%:"x!':%'   ":++o#@####@@#%#@@x@88""". %x
-o%   .+oo#############@@@:....''!o++ox+!!oo+!+8"   .:!++%@#####@@#%8@#8#@@@@" %x
-o%  ..:o+x#############@@x......"!'!%"x:.+o'+o"!.   '!++o#@######@@88@#o":::. xx
-o% .. .+++%@###########@@#'....."!:"%"x:":::!!:+'    :+++%@#######@@#%##'   . xx
-ox     '+++8@####@@@@@@@@@" .......''"''.. ...''..   '+++o#@@@@@@@@@@@8#8.    xx
-+8!+++++x%%%#############@x++++++++++++++++++++++o++++x%%%8############8#x!+++8o
-» focused, ready to dig into network config
-```
+<img src="docs/hero.png" width="560" alt="mood — focused, ready to dig into network config">
 
 Unter der Haube: Eine Emotion (z.B. `smiling`) wird in einen Prompt eingesetzt, auf
 der GPU ein Bild generiert und als ASCII-Helligkeitsgradient im Terminal angezeigt.
 Per MCP ruft die KI das Tool **`feel(emotion)`** selbst auf, wann immer sich ihre
 Stimmung ändert — wie ein Mensch unwillkürlich das Gesicht verzieht.
-
-<img src="docs/demo.png" width="420" alt="mood — relieved and laughing">
 
 ## Schnellstart
 
@@ -85,9 +41,9 @@ echo "laughing" | nc 127.0.0.1 8765      # Emotion ans laufende Display schicken
 ./run.sh "a red sports car"              # einmaliges Bild (kein '::' -> One-Shot)
 ```
 
-<img src="docs/demo2.png" width="380" alt="mood — very happy">
+Weitere Stimmungen:
 
-*`very happy`*
+<img src="docs/demo.png" width="300" alt="relieved and laughing"> <img src="docs/demo2.png" width="300" alt="very happy">
 
 ## Aussehen anpassen
 
