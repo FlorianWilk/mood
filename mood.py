@@ -503,12 +503,15 @@ def serve_loop(template: str, args, cfg: dict, max_cols: int, max_rows: int):
         empty_cache()
 
 
-def bridge_send(emotion: str, port: int, timeout: float = 180.0) -> str:
-    """Eine Emotion an den laufenden Listener schicken und das ASCII zurücklesen.
-    Liest bis zum EOT-Marker. Wirft ConnectionRefusedError, wenn kein Listener läuft."""
+def bridge_send(emotion: str, port: int, wait: bool = True, timeout: float = 180.0) -> str:
+    """Eine Emotion an den laufenden Listener schicken. Wirft ConnectionRefusedError,
+    wenn kein Listener läuft. wait=True liest das ASCII bis zum EOT-Marker zurück;
+    wait=False = fire-and-forget (sofort zurück, das Bild erscheint asynchron)."""
     import socket
     with socket.create_connection((DEFAULT_HOST, port), timeout=10) as s:
         s.sendall((emotion + "\n").encode("utf-8"))
+        if not wait:
+            return ""  # Display rendert asynchron; nicht auf das Ergebnis warten
         s.settimeout(timeout)
         buf = bytearray()
         while True:
@@ -545,19 +548,20 @@ def serve_mcp(args):
             emotion: kurzer englischer Ausdruck deiner aktuellen Stimmung, z.B.
                      "smiling", "thinking hard", "surprised", "laughing", "confused",
                      "proud", "sad", "focused", "amused".
-            return_ascii: nur für Debug; normal weglassen (Rückgabe ist dann "ok",
-                          das Bild erscheint auf dem Display).
+            return_ascii: nur für Debug; normal weglassen (Rückgabe ist dann sofort
+                          "ok", das Bild erscheint asynchron auf dem Display).
         """
         try:
-            art = bridge_send(emotion, port)
+            # Default: fire-and-forget -> sofort "ok", kein Warten auf die Generierung.
+            art = bridge_send(emotion, port, wait=return_ascii)
         except ConnectionRefusedError:
             return (f"Kein mood-Listener auf Port {port}. Bitte im Terminal starten:\n"
                     f"  uv run mood.py --port {port}")
         except OSError as e:
             return f"Verbindungsfehler zum Listener (Port {port}): {e}"
-        if art.startswith("Fehler:"):  # Listener meldet Generierungsfehler
-            return art
-        return art if return_ascii else "ok"
+        if return_ascii:
+            return art  # enthält ggf. "Fehler: …" vom Listener
+        return "ok"
 
     err(f"mood MCP-Bridge (stdio) bereit · leitet an Listener auf Port {port}")
     mcp.run()
